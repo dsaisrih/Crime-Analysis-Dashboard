@@ -1,0 +1,555 @@
+
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: var(--font-sans); background: transparent; color: var(--color-text-primary); }
+  .app { display: flex; flex-direction: column; min-height: 600px; }
+  .topbar { display: flex; align-items: center; gap: 16px; padding: 14px 20px; border-bottom: 0.5px solid var(--color-border-tertiary); background: var(--color-background-primary); flex-wrap: wrap; }
+  .topbar-brand { display: flex; align-items: center; gap: 10px; }
+  .brand-icon { width: 32px; height: 32px; background: #E24B4A; border-radius: 8px; display: flex; align-items: center; justify-content: center; }
+  .brand-title { font-size: 16px; font-weight: 500; }
+  .brand-sub { font-size: 12px; color: var(--color-text-secondary); }
+  .nav { display: flex; gap: 4px; margin-left: auto; }
+  .nav-btn { padding: 6px 14px; border-radius: var(--border-radius-md); border: 0.5px solid transparent; font-size: 13px; cursor: pointer; background: transparent; color: var(--color-text-secondary); transition: all 0.15s; }
+  .nav-btn.active { background: var(--color-background-secondary); color: var(--color-text-primary); border-color: var(--color-border-tertiary); }
+  .nav-btn:hover:not(.active) { background: var(--color-background-secondary); }
+  .main { display: flex; flex: 1; min-height: 0; }
+  .sidebar { width: 240px; border-right: 0.5px solid var(--color-border-tertiary); padding: 16px; display: flex; flex-direction: column; gap: 16px; background: var(--color-background-primary); flex-shrink: 0; }
+  .filter-section { display: flex; flex-direction: column; gap: 8px; }
+  .filter-label { font-size: 11px; font-weight: 500; color: var(--color-text-secondary); letter-spacing: 0.06em; text-transform: uppercase; }
+  .filter-select { width: 100%; padding: 6px 10px; border-radius: var(--border-radius-md); border: 0.5px solid var(--color-border-tertiary); background: var(--color-background-secondary); color: var(--color-text-primary); font-size: 13px; cursor: pointer; }
+  .filter-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+  .chip { padding: 4px 10px; border-radius: 20px; font-size: 12px; cursor: pointer; border: 0.5px solid var(--color-border-tertiary); background: var(--color-background-secondary); color: var(--color-text-secondary); transition: all 0.15s; }
+  .chip.active { background: #E24B4A; color: #fff; border-color: #E24B4A; }
+  .content { flex: 1; overflow: auto; padding: 20px; background: var(--color-background-tertiary); display: flex; flex-direction: column; gap: 16px; }
+  .metrics-row { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; }
+  .metric-card { background: var(--color-background-primary); border-radius: var(--border-radius-lg); border: 0.5px solid var(--color-border-tertiary); padding: 14px 16px; }
+  .metric-label { font-size: 12px; color: var(--color-text-secondary); margin-bottom: 4px; }
+  .metric-value { font-size: 26px; font-weight: 500; }
+  .metric-delta { font-size: 12px; margin-top: 4px; }
+  .metric-delta.up { color: #E24B4A; }
+  .metric-delta.down { color: #1D9E75; }
+  .charts-row { display: grid; grid-template-columns: 2fr 1fr; gap: 16px; }
+  .chart-card { background: var(--color-background-primary); border-radius: var(--border-radius-lg); border: 0.5px solid var(--color-border-tertiary); padding: 16px; }
+  .chart-title { font-size: 14px; font-weight: 500; margin-bottom: 12px; }
+  .chart-sub { font-size: 12px; color: var(--color-text-secondary); margin-bottom: 12px; }
+  .bottom-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  .table-wrap { overflow: auto; max-height: 280px; }
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  th { text-align: left; padding: 8px 10px; font-size: 11px; font-weight: 500; color: var(--color-text-secondary); border-bottom: 0.5px solid var(--color-border-tertiary); position: sticky; top: 0; background: var(--color-background-primary); letter-spacing: 0.04em; text-transform: uppercase; }
+  td { padding: 8px 10px; border-bottom: 0.5px solid var(--color-border-tertiary); color: var(--color-text-primary); }
+  tr:hover td { background: var(--color-background-secondary); }
+  .badge { display: inline-block; padding: 2px 8px; border-radius: 12px; font-size: 11px; font-weight: 500; }
+  .badge-red { background: #FCEBEB; color: #A32D2D; }
+  .badge-amber { background: #FAEEDA; color: #854F0B; }
+  .badge-green { background: #EAF3DE; color: #3B6D11; }
+  .badge-blue { background: #E6F1FB; color: #185FA5; }
+  .heatmap-grid { display: grid; grid-template-columns: 40px repeat(12, 1fr); gap: 3px; font-size: 11px; }
+  .heatmap-cell { height: 28px; border-radius: 4px; display: flex; align-items: center; justify-content: center; font-size: 10px; }
+  .heatmap-label { display: flex; align-items: center; color: var(--color-text-secondary); font-size: 11px; }
+  .ai-box { background: var(--color-background-primary); border-radius: var(--border-radius-lg); border: 0.5px solid var(--color-border-tertiary); padding: 16px; }
+  .ai-header { display: flex; align-items: center; gap: 8px; margin-bottom: 12px; }
+  .ai-badge { background: #E6F1FB; color: #185FA5; padding: 3px 10px; border-radius: 12px; font-size: 11px; font-weight: 500; }
+  .ai-text { font-size: 13px; color: var(--color-text-secondary); line-height: 1.6; }
+  .ai-insight { display: flex; gap: 8px; padding: 8px 0; border-bottom: 0.5px solid var(--color-border-tertiary); }
+  .ai-insight:last-child { border-bottom: none; padding-bottom: 0; }
+  .ai-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; margin-top: 4px; }
+  .map-placeholder { background: var(--color-background-secondary); border-radius: var(--border-radius-md); height: 220px; display: flex; align-items: center; justify-content: center; flex-direction: column; gap: 8px; position: relative; overflow: hidden; }
+  .map-dot { position: absolute; border-radius: 50%; opacity: 0.7; }
+  .predict-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .predict-card { background: var(--color-background-secondary); border-radius: var(--border-radius-md); padding: 12px; border-left: 3px solid; }
+  .predict-val { font-size: 20px; font-weight: 500; }
+  .predict-lbl { font-size: 12px; color: var(--color-text-secondary); margin-top: 2px; }
+  .risk-bar { height: 6px; background: var(--color-border-tertiary); border-radius: 3px; margin-top: 8px; overflow: hidden; }
+  .risk-fill { height: 100%; border-radius: 3px; }
+  .ask-btn { display: inline-flex; align-items: center; gap: 6px; padding: 8px 16px; border-radius: var(--border-radius-md); border: 0.5px solid var(--color-border-secondary); font-size: 13px; cursor: pointer; background: var(--color-background-secondary); color: var(--color-text-primary); margin-top: 10px; transition: all 0.15s; }
+  .ask-btn:hover { background: var(--color-background-tertiary); }
+  @media (max-width: 700px) {
+    .metrics-row { grid-template-columns: 1fr 1fr; }
+    .charts-row, .bottom-row { grid-template-columns: 1fr; }
+    .main { flex-direction: column; }
+    .sidebar { width: 100%; border-right: none; border-bottom: 0.5px solid var(--color-border-tertiary); }
+  }
+</style>
+
+<div class="app">
+  <div class="topbar">
+    <div class="topbar-brand">
+      <div class="brand-icon">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round">
+          <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+        </svg>
+      </div>
+      <div>
+        <div class="brand-title">CrimeWatch Analytics</div>
+        <div class="brand-sub">Unified Crime Intelligence Platform</div>
+      </div>
+    </div>
+    <div class="nav">
+      <button class="nav-btn active" onclick="showView('dashboard')">Dashboard</button>
+      <button class="nav-btn" onclick="showView('incidents')">Incidents</button>
+      <button class="nav-btn" onclick="showView('predict')">Predict</button>
+      <button class="nav-btn" onclick="showView('ai')">AI Analysis</button>
+    </div>
+  </div>
+
+  <div class="main">
+    <div class="sidebar">
+      <div class="filter-section">
+        <div class="filter-label">Time Period</div>
+        <select class="filter-select" id="period-sel" onchange="updateCharts()">
+          <option>Last 30 days</option>
+          <option>Last 90 days</option>
+          <option>Last 6 months</option>
+          <option selected>Last 12 months</option>
+        </select>
+      </div>
+      <div class="filter-section">
+        <div class="filter-label">District</div>
+        <select class="filter-select" id="district-sel" onchange="updateCharts()">
+          <option>All Districts</option>
+          <option>North Zone</option>
+          <option>South Zone</option>
+          <option>East Zone</option>
+          <option>West Zone</option>
+          <option>Central Zone</option>
+        </select>
+      </div>
+      <div class="filter-section">
+        <div class="filter-label">Crime Type</div>
+        <div class="filter-chips">
+          <div class="chip active" onclick="toggleChip(this)">All</div>
+          <div class="chip" onclick="toggleChip(this)">Theft</div>
+          <div class="chip" onclick="toggleChip(this)">Assault</div>
+          <div class="chip" onclick="toggleChip(this)">Burglary</div>
+          <div class="chip" onclick="toggleChip(this)">Fraud</div>
+          <div class="chip" onclick="toggleChip(this)">Drug</div>
+          <div class="chip" onclick="toggleChip(this)">Vandalism</div>
+        </div>
+      </div>
+      <div class="filter-section">
+        <div class="filter-label">Severity</div>
+        <div class="filter-chips">
+          <div class="chip active" onclick="toggleChip(this)">All</div>
+          <div class="chip" onclick="toggleChip(this)">High</div>
+          <div class="chip" onclick="toggleChip(this)">Medium</div>
+          <div class="chip" onclick="toggleChip(this)">Low</div>
+        </div>
+      </div>
+      <div class="filter-section" style="margin-top:auto;">
+        <div class="filter-label">Export</div>
+        <button class="ask-btn" style="width:100%;justify-content:center;" onclick="sendPrompt('Generate a detailed crime analysis report with statistics, trends, and recommendations for law enforcement')">Generate Report ↗</button>
+      </div>
+    </div>
+
+    <div class="content" id="view-dashboard">
+      <div class="metrics-row">
+        <div class="metric-card">
+          <div class="metric-label">Total Incidents</div>
+          <div class="metric-value" id="m-total">4,287</div>
+          <div class="metric-delta up" id="m-total-d">▲ 3.2% vs prev period</div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-label">Cleared Cases</div>
+          <div class="metric-value" id="m-cleared">1,943</div>
+          <div class="metric-delta down" id="m-cleared-d">▼ 45.3% clearance rate</div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-label">High Risk Zones</div>
+          <div class="metric-value" id="m-zones">7</div>
+          <div class="metric-delta up">▲ 2 new this period</div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-label">Avg Response Time</div>
+          <div class="metric-value" id="m-resp">8.4<span style="font-size:14px;font-weight:400;color:var(--color-text-secondary)"> min</span></div>
+          <div class="metric-delta down">▼ improved by 1.2 min</div>
+        </div>
+      </div>
+
+      <div class="charts-row">
+        <div class="chart-card">
+          <div class="chart-title">Monthly Crime Trend</div>
+          <div class="chart-sub">Incidents by type over the past 12 months</div>
+          <div style="position:relative;width:100%;height:220px;">
+            <canvas id="trendChart"></canvas>
+          </div>
+        </div>
+        <div class="chart-card">
+          <div class="chart-title">Crime Type Distribution</div>
+          <div id="crime-legend" style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:10px;font-size:12px;color:var(--color-text-secondary);"></div>
+          <div style="position:relative;width:100%;height:180px;">
+            <canvas id="typeChart"></canvas>
+          </div>
+        </div>
+      </div>
+
+      <div class="bottom-row">
+        <div class="chart-card">
+          <div class="chart-title">Crime Heatmap — Hour vs Day</div>
+          <div class="chart-sub" style="margin-bottom:8px;">Incident frequency by time of day and day of week</div>
+          <div id="heatmap"></div>
+        </div>
+        <div class="chart-card">
+          <div class="chart-title">District Comparison</div>
+          <div style="position:relative;width:100%;height:220px;">
+            <canvas id="distChart"></canvas>
+          </div>
+        </div>
+      </div>
+
+      <div class="ai-box">
+        <div class="ai-header">
+          <div class="chart-title" style="margin:0;">AI Insights</div>
+          <div class="ai-badge">Auto-generated</div>
+        </div>
+        <div class="ai-insight">
+          <div class="ai-dot" style="background:#E24B4A;"></div>
+          <div class="ai-text">Theft incidents spike <strong>37%</strong> on Friday nights between 10 PM–2 AM in the North Zone — concentrated near commercial zones.</div>
+        </div>
+        <div class="ai-insight">
+          <div class="ai-dot" style="background:#EF9F27;"></div>
+          <div class="ai-text">Burglary attempts show a seasonal pattern peaking in winter months. 62% occur at residential addresses between 9 AM–3 PM.</div>
+        </div>
+        <div class="ai-insight">
+          <div class="ai-dot" style="background:#1D9E75;"></div>
+          <div class="ai-text">Increased patrols in East Zone over the last 60 days correlated with a <strong>19% drop</strong> in street-level crimes — intervention is working.</div>
+        </div>
+        <div class="ai-insight">
+          <div class="ai-dot" style="background:#378ADD;"></div>
+          <div class="ai-text">Fraud cases show a 28% increase year-over-year, largely driven by online scams targeting residents aged 55+.</div>
+        </div>
+        <button class="ask-btn" onclick="sendPrompt('Give me deeper AI analysis on crime patterns, hotspot predictions, and actionable law enforcement recommendations based on the current data')">Ask AI for deeper analysis ↗</button>
+      </div>
+    </div>
+
+    <div class="content" id="view-incidents" style="display:none;">
+      <div class="chart-card">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;flex-wrap:wrap;gap:8px;">
+          <div class="chart-title" style="margin:0;">Recent Incidents</div>
+          <div style="display:flex;gap:8px;">
+            <input type="text" placeholder="Search incidents..." style="padding:6px 10px;border-radius:var(--border-radius-md);border:0.5px solid var(--color-border-tertiary);background:var(--color-background-secondary);color:var(--color-text-primary);font-size:13px;width:180px;" oninput="filterTable(this.value)">
+            <select class="filter-select" style="width:auto;" onchange="sortTable(this.value)">
+              <option>Sort: Latest</option>
+              <option>Sort: Severity</option>
+              <option>Sort: Type</option>
+            </select>
+          </div>
+        </div>
+        <div class="table-wrap">
+          <table id="incident-table">
+            <thead>
+              <tr>
+                <th>ID</th><th>Date</th><th>Type</th><th>Location</th><th>Severity</th><th>Status</th><th>Officer</th>
+              </tr>
+            </thead>
+            <tbody id="incident-tbody"></tbody>
+          </table>
+        </div>
+        <button class="ask-btn" style="margin-top:12px;" onclick="sendPrompt('Analyze these recent incidents and identify patterns, repeat locations, and recommended resource allocation for law enforcement')">Analyze patterns with AI ↗</button>
+      </div>
+    </div>
+
+    <div class="content" id="view-predict" style="display:none;">
+      <div class="charts-row">
+        <div class="chart-card">
+          <div class="chart-title">30-Day Crime Forecast</div>
+          <div class="chart-sub">Predicted incidents based on historical patterns and seasonal trends</div>
+          <div style="position:relative;width:100%;height:240px;">
+            <canvas id="forecastChart"></canvas>
+          </div>
+        </div>
+        <div class="chart-card">
+          <div class="chart-title">Risk Zone Map</div>
+          <div class="map-placeholder" id="risk-map">
+            <svg width="100%" height="100%" viewBox="0 0 400 220" style="position:absolute;top:0;left:0;opacity:0.15;">
+              <rect x="20" y="20" width="360" height="180" rx="8" fill="none" stroke="currentColor" stroke-width="1"/>
+              <line x1="200" y1="20" x2="200" y2="200" stroke="currentColor" stroke-width="0.5"/>
+              <line x1="20" y1="110" x2="380" y2="110" stroke="currentColor" stroke-width="0.5"/>
+            </svg>
+            <div id="map-dots"></div>
+            <div style="font-size:12px;color:var(--color-text-secondary);z-index:1;">Geographic Risk Heatmap</div>
+            <div style="font-size:11px;color:var(--color-text-secondary);z-index:1;">Radius = incident density</div>
+          </div>
+          <div style="display:flex;gap:8px;margin-top:10px;font-size:11px;">
+            <span style="display:flex;align-items:center;gap:4px;"><span style="width:10px;height:10px;border-radius:50%;background:#E24B4A;opacity:0.7;"></span>High risk</span>
+            <span style="display:flex;align-items:center;gap:4px;"><span style="width:10px;height:10px;border-radius:50%;background:#EF9F27;opacity:0.7;"></span>Medium</span>
+            <span style="display:flex;align-items:center;gap:4px;"><span style="width:10px;height:10px;border-radius:50%;background:#1D9E75;opacity:0.7;"></span>Low</span>
+          </div>
+        </div>
+      </div>
+      <div class="chart-card">
+        <div class="chart-title">Prediction Confidence by Crime Type</div>
+        <div class="predict-grid" id="predict-grid"></div>
+        <button class="ask-btn" style="margin-top:12px;" onclick="sendPrompt('Based on the crime predictions, what preventive measures and patrol strategies should be deployed in the next 30 days?')">Get prevention strategy ↗</button>
+      </div>
+    </div>
+
+    <div class="content" id="view-ai" style="display:none;">
+      <div class="chart-card">
+        <div class="chart-title">AI-Powered Analysis Center</div>
+        <div class="ai-text" style="margin-bottom:16px;">Ask the AI to analyze crime patterns, generate reports, or get actionable recommendations.</div>
+        <div style="display:flex;flex-direction:column;gap:10px;">
+          <button class="ask-btn" style="width:fit-content;" onclick="sendPrompt('Identify the top 5 crime hotspots and explain what factors are driving crime in those areas')">Identify crime hotspots ↗</button>
+          <button class="ask-btn" style="width:fit-content;" onclick="sendPrompt('Compare this year crime statistics to last year and explain what changed significantly and why')">Year-over-year comparison ↗</button>
+          <button class="ask-btn" style="width:fit-content;" onclick="sendPrompt('Which demographic areas are most underserved by law enforcement response and how should resources be reallocated?')">Resource allocation analysis ↗</button>
+          <button class="ask-btn" style="width:fit-content;" onclick="sendPrompt('Analyze the correlation between time of day, day of week, weather patterns and crime rates. What are the most dangerous times?')">Temporal crime analysis ↗</button>
+          <button class="ask-btn" style="width:fit-content;" onclick="sendPrompt('Generate a full executive crime briefing report with trends, predictions, and actionable recommendations for the police commissioner')">Generate executive briefing ↗</button>
+          <button class="ask-btn" style="width:fit-content;" onclick="sendPrompt('Predict which crime types are likely to increase next quarter and suggest proactive policing strategies')">Quarterly crime prediction ↗</button>
+        </div>
+      </div>
+      <div class="chart-card">
+        <div class="chart-title">Model Performance Metrics</div>
+        <div class="predict-grid">
+          <div class="predict-card" style="border-left-color:#1D9E75;">
+            <div class="predict-val">91.4%</div>
+            <div class="predict-lbl">Prediction accuracy (30-day)</div>
+            <div class="risk-bar"><div class="risk-fill" style="width:91%;background:#1D9E75;"></div></div>
+          </div>
+          <div class="predict-card" style="border-left-color:#378ADD;">
+            <div class="predict-val">87.2%</div>
+            <div class="predict-lbl">Hotspot detection precision</div>
+            <div class="risk-bar"><div class="risk-fill" style="width:87%;background:#378ADD;"></div></div>
+          </div>
+          <div class="predict-card" style="border-left-color:#EF9F27;">
+            <div class="predict-val">3.8%</div>
+            <div class="predict-lbl">False positive rate</div>
+            <div class="risk-bar"><div class="risk-fill" style="width:4%;background:#EF9F27;"></div></div>
+          </div>
+          <div class="predict-card" style="border-left-color:#E24B4A;">
+            <div class="predict-val">94.1%</div>
+            <div class="predict-lbl">Severity classification accuracy</div>
+            <div class="risk-bar"><div class="risk-fill" style="width:94%;background:#E24B4A;"></div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<script>
+const MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+const CRIME_TYPES = ['Theft','Assault','Burglary','Fraud','Drug','Vandalism','Other'];
+const CRIME_COLORS = ['#E24B4A','#EF9F27','#378ADD','#1D9E75','#7F77DD','#D4537E','#888780'];
+const DISTRICTS = ['North','South','East','West','Central'];
+
+let charts = {};
+
+function rand(min, max) { return Math.floor(Math.random()*(max-min+1))+min; }
+
+function showView(v) {
+  ['dashboard','incidents','predict','ai'].forEach(id => {
+    document.getElementById('view-'+id).style.display = id===v?'flex':'none';
+    if(id===v) document.getElementById('view-'+id).style.flexDirection='column';
+  });
+  document.querySelectorAll('.nav-btn').forEach((b,i)=>{
+    b.classList.toggle('active', ['dashboard','incidents','predict','ai'][i]===v);
+  });
+  if(v==='predict') buildForecastChart();
+  if(v==='incidents') buildTable();
+}
+
+function toggleChip(el) {
+  const parent = el.parentElement;
+  const chips = parent.querySelectorAll('.chip');
+  if(el.textContent==='All') {
+    chips.forEach(c=>c.classList.remove('active'));
+    el.classList.add('active');
+  } else {
+    parent.querySelector('.chip').classList.remove('active');
+    el.classList.toggle('active');
+    if([...chips].filter(c=>c.classList.contains('active')).length===0)
+      parent.querySelector('.chip').classList.add('active');
+  }
+  updateCharts();
+}
+
+function updateCharts() {
+  buildTrendChart(); buildTypeChart(); buildDistChart();
+  const t=document.getElementById('m-total');
+  t.textContent=rand(3800,5200).toLocaleString();
+}
+
+function buildTrendChart() {
+  const ctx = document.getElementById('trendChart').getContext('2d');
+  if(charts.trend) charts.trend.destroy();
+  const data1 = MONTHS.map(()=>rand(180,420));
+  const data2 = MONTHS.map(()=>rand(60,180));
+  const data3 = MONTHS.map(()=>rand(40,130));
+  charts.trend = new Chart(ctx, {
+    type:'line',
+    data:{
+      labels:MONTHS,
+      datasets:[
+        {label:'Theft',data:data1,borderColor:'#E24B4A',backgroundColor:'rgba(226,75,74,0.08)',tension:0.4,fill:true,pointRadius:3},
+        {label:'Assault',data:data2,borderColor:'#EF9F27',backgroundColor:'rgba(239,159,39,0.08)',tension:0.4,fill:true,pointRadius:3},
+        {label:'Burglary',data:data3,borderColor:'#378ADD',backgroundColor:'rgba(55,138,221,0.08)',tension:0.4,fill:true,pointRadius:3}
+      ]
+    },
+    options:{
+      responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{display:false}},
+      scales:{
+        x:{grid:{color:'rgba(128,128,128,0.1)'},ticks:{font:{size:11},color:'#888'}},
+        y:{grid:{color:'rgba(128,128,128,0.1)'},ticks:{font:{size:11},color:'#888'}}
+      }
+    }
+  });
+}
+
+function buildTypeChart() {
+  const ctx = document.getElementById('typeChart').getContext('2d');
+  if(charts.type) charts.type.destroy();
+  const vals = CRIME_TYPES.map(()=>rand(80,600));
+  const total = vals.reduce((a,b)=>a+b,0);
+  const leg = document.getElementById('crime-legend');
+  leg.innerHTML = CRIME_TYPES.map((t,i)=>`<span style="display:flex;align-items:center;gap:4px;"><span style="width:10px;height:10px;border-radius:2px;background:${CRIME_COLORS[i]};"></span>${t} ${Math.round(vals[i]/total*100)}%</span>`).join('');
+  charts.type = new Chart(ctx, {
+    type:'doughnut',
+    data:{labels:CRIME_TYPES,datasets:[{data:vals,backgroundColor:CRIME_COLORS,borderWidth:2,borderColor:'transparent'}]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},cutout:'65%'}
+  });
+}
+
+function buildDistChart() {
+  const ctx = document.getElementById('distChart').getContext('2d');
+  if(charts.dist) charts.dist.destroy();
+  charts.dist = new Chart(ctx, {
+    type:'bar',
+    data:{
+      labels:DISTRICTS,
+      datasets:[
+        {label:'Resolved',data:DISTRICTS.map(()=>rand(100,300)),backgroundColor:'#1D9E75'},
+        {label:'Open',data:DISTRICTS.map(()=>rand(80,250)),backgroundColor:'#E24B4A'}
+      ]
+    },
+    options:{
+      responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{display:false}},
+      scales:{
+        x:{stacked:true,grid:{display:false},ticks:{font:{size:11},color:'#888'}},
+        y:{stacked:true,grid:{color:'rgba(128,128,128,0.1)'},ticks:{font:{size:11},color:'#888'}}
+      }
+    }
+  });
+}
+
+function buildHeatmap() {
+  const days=['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
+  const hours=[0,3,6,9,12,15,18,21];
+  const hh=document.getElementById('heatmap');
+  let html=`<div class="heatmap-grid">`;
+  html+=`<div></div>`;
+  hours.forEach(h=>html+=`<div class="heatmap-label" style="justify-content:center;font-size:10px;">${h}h</div>`);
+  days.forEach(d=>{
+    html+=`<div class="heatmap-label">${d}</div>`;
+    hours.forEach(h=>{
+      const v=rand(0,100);
+      const r=v>70?`rgba(226,75,74,${v/100})`:v>40?`rgba(239,159,39,${v/100})`:`rgba(55,138,221,${v/100})`;
+      html+=`<div class="heatmap-cell" style="background:${r};color:${v>50?'#fff':'var(--color-text-secondary)'};">${v}</div>`;
+    });
+  });
+  html+=`</div>`;
+  hh.innerHTML=html;
+}
+
+const LOCATIONS = ['Main St & 5th Ave','Riverside Dr','Market Square','Oak Lane','Central Park Rd','Harbor Blvd','Tech District','Old Town','Shopping Mall','Industrial Zone'];
+const OFFICERS = ['Ofc. Sharma','Ofc. Patel','Det. Kumar','Ofc. Singh','Det. Reddy'];
+const STATUSES = ['Open','Under Investigation','Cleared','Closed'];
+const STATUS_COLORS = {'Open':'badge-red','Under Investigation':'badge-amber','Cleared':'badge-green','Closed':'badge-blue'};
+const SEV_COLORS = {'High':'badge-red','Medium':'badge-amber','Low':'badge-green'};
+
+let allIncidents = [];
+
+function buildTable() {
+  if(allIncidents.length===0) {
+    for(let i=0;i<50;i++) {
+      const d=new Date(2025,rand(0,11),rand(1,28));
+      allIncidents.push({
+        id:'INC-'+String(1000+i),
+        date:d.toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'}),
+        type:CRIME_TYPES[rand(0,6)],
+        location:LOCATIONS[rand(0,9)],
+        sev:['High','Medium','Low'][rand(0,2)],
+        status:STATUSES[rand(0,3)],
+        officer:OFFICERS[rand(0,4)]
+      });
+    }
+  }
+  renderTable(allIncidents);
+}
+
+function renderTable(rows) {
+  document.getElementById('incident-tbody').innerHTML=rows.map(r=>`
+    <tr>
+      <td style="font-family:var(--font-mono);font-size:12px;color:var(--color-text-secondary);">${r.id}</td>
+      <td style="color:var(--color-text-secondary);font-size:12px;">${r.date}</td>
+      <td>${r.type}</td>
+      <td style="color:var(--color-text-secondary);font-size:12px;">${r.location}</td>
+      <td><span class="badge ${SEV_COLORS[r.sev]}">${r.sev}</span></td>
+      <td><span class="badge ${STATUS_COLORS[r.status]}">${r.status}</span></td>
+      <td style="font-size:12px;color:var(--color-text-secondary);">${r.officer}</td>
+    </tr>`).join('');
+}
+
+function filterTable(q) {
+  const filtered=allIncidents.filter(r=>Object.values(r).some(v=>v.toLowerCase().includes(q.toLowerCase())));
+  renderTable(filtered);
+}
+
+function sortTable(s) {
+  const sorted=[...allIncidents];
+  if(s.includes('Severity')) sorted.sort((a,b)=>['High','Medium','Low'].indexOf(a.sev)-['High','Medium','Low'].indexOf(b.sev));
+  else if(s.includes('Type')) sorted.sort((a,b)=>a.type.localeCompare(b.type));
+  renderTable(sorted);
+}
+
+function buildForecastChart() {
+  const ctx = document.getElementById('forecastChart').getContext('2d');
+  if(charts.forecast) charts.forecast.destroy();
+  const days=Array.from({length:30},(_,i)=>`D${i+1}`);
+  const actual=days.slice(0,20).map(()=>rand(100,250));
+  const predicted=days.map(()=>rand(90,270));
+  const upper=predicted.map(v=>v+rand(20,50));
+  const lower=predicted.map(v=>v-rand(20,50));
+  charts.forecast=new Chart(ctx,{
+    type:'line',
+    data:{
+      labels:days,
+      datasets:[
+        {label:'Actual',data:[...actual,...Array(10).fill(null)],borderColor:'#E24B4A',tension:0.4,pointRadius:2,borderWidth:2},
+        {label:'Predicted',data:predicted,borderColor:'#378ADD',borderDash:[5,4],tension:0.4,pointRadius:0,borderWidth:1.5},
+        {label:'Upper bound',data:upper,borderColor:'rgba(55,138,221,0.2)',backgroundColor:'rgba(55,138,221,0.08)',fill:'+1',pointRadius:0,borderWidth:0.5,tension:0.4},
+        {label:'Lower bound',data:lower,borderColor:'rgba(55,138,221,0.2)',fill:false,pointRadius:0,borderWidth:0.5,tension:0.4}
+      ]
+    },
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{
+      x:{grid:{display:false},ticks:{font:{size:10},color:'#888',maxTicksLimit:10}},
+      y:{grid:{color:'rgba(128,128,128,0.1)'},ticks:{font:{size:11},color:'#888'}}
+    }}
+  });
+
+  const pg=document.getElementById('predict-grid');
+  const crimes=[{t:'Theft',v:312,c:'#E24B4A',conf:88},{t:'Assault',v:127,c:'#EF9F27',conf:76},{t:'Burglary',v:89,c:'#378ADD',conf:91},{t:'Fraud',v:203,c:'#1D9E75',conf:84}];
+  pg.innerHTML=crimes.map(c=>`
+    <div class="predict-card" style="border-left-color:${c.c};">
+      <div class="predict-val" style="color:${c.c};">${c.v}</div>
+      <div class="predict-lbl">Predicted ${c.t} incidents</div>
+      <div class="risk-bar"><div class="risk-fill" style="width:${c.conf}%;background:${c.c};"></div></div>
+      <div style="font-size:11px;color:var(--color-text-secondary);margin-top:4px;">${c.conf}% confidence</div>
+    </div>`).join('');
+
+  const mapDots=document.getElementById('map-dots');
+  const dots=[
+    {x:30,y:25,r:50,c:'rgba(226,75,74,0.6)'},{x:65,y:40,r:35,c:'rgba(226,75,74,0.5)'},
+    {x:50,y:60,r:28,c:'rgba(239,159,39,0.6)'},{x:20,y:65,r:20,c:'rgba(29,158,117,0.5)'},
+    {x:75,y:70,r:25,c:'rgba(239,159,39,0.5)'},{x:40,y:80,r:15,c:'rgba(29,158,117,0.5)'},
+    {x:80,y:25,r:18,c:'rgba(29,158,117,0.6)'}
+  ];
+  mapDots.innerHTML=dots.map(d=>`<div style="position:absolute;left:${d.x}%;top:${d.y}%;width:${d.r}px;height:${d.r}px;border-radius:50%;background:${d.c};transform:translate(-50%,-50%);"></div>`).join('');
+}
+
+buildTrendChart();
+buildTypeChart();
+buildDistChart();
+buildHeatmap();
+</script>
